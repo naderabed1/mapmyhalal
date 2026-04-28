@@ -168,22 +168,26 @@
     let currentResults = [];
     let map = null;
     let markers = [];
+    let lastQuery = '';
+    let lastRadius = '';
+    let lastConfig = null;
+    let loadMorePage = 1;
 
     const tabConfig = {
       restaurants: {
         label: 'halal restaurants', icon: '🍽️',
-        system: (radius) => `Search the web for real halal restaurants within ${radius} miles of the given US location. CRITICAL: every name, address, and phone must be accurate and match the same business — never mix details from different businesses. Return ONLY a raw JSON array, no markdown. Each object: name, address (full with city/state), phone (or null), rating (number or null), reviewCount (number or null), hours (string array or null), reviews (up to 2 real snippets or []), cuisine (string or null), lat (latitude number or null), lng (longitude number or null). Return 8-12 verified results.`,
-        prompt: (q, r) => `Search for halal restaurants within ${r} miles of ${q}, USA. Verify each name matches its address.`
+        system: (radius) => `You are a halal food directory assistant. Search the web thoroughly for ALL real, currently operating halal restaurants near the given US location. CRITICAL RULES: 1) Search multiple times to find ALL restaurants, 2) Prioritize results within the exact ZIP code or city first, then expand outward to ${radius} miles, 3) Every name, address, and phone must be accurate and verified — never mix details from different businesses, 4) Return ONLY a raw JSON array with no markdown or code fences. Each object: name, address (full with city/state), phone (or null), rating (number or null), reviewCount (number or null), hours (string array or null), reviews (up to 2 snippets or []), cuisine (string or null), lat (null), lng (null). Return ALL found results up to 15, sorted nearest first.`,
+        prompt: (q, r) => `Search for ALL halal restaurants within ${r} miles of ${q}, USA. Prioritize those within the exact ZIP code or city first. Verify each name matches its address.`
       },
       grocery: {
         label: 'halal grocery stores', icon: '🛒',
-        system: (radius) => `Search the web for real halal grocery stores and halal markets within ${radius} miles of the given US location. CRITICAL: every name, address, and phone must be accurate — never mix details from different businesses. Return ONLY a raw JSON array, no markdown. Each object: name, address (full with city/state), phone (or null), rating (number or null), reviewCount (number or null), hours (string array or null), reviews (up to 2 real snippets or []), cuisine (string or null), lat (latitude number or null), lng (longitude number or null). Return 8-12 verified results.`,
-        prompt: (q, r) => `Search for halal grocery stores and halal markets within ${r} miles of ${q}, USA. Verify each name matches its address.`
+        system: (radius) => `You are a halal food directory assistant. Search the web thoroughly for ALL real, currently operating halal grocery stores and halal markets near the given US location. CRITICAL RULES: 1) Search multiple times to find ALL stores, 2) Prioritize results within the exact ZIP code or city first, then expand outward to ${radius} miles, 3) Every name, address, and phone must be accurate — never mix details from different businesses, 4) Return ONLY a raw JSON array with no markdown or code fences. Each object: name, address (full with city/state), phone (or null), rating (number or null), reviewCount (number or null), hours (string array or null), reviews (up to 2 snippets or []), cuisine (string or null), lat (null), lng (null). Return ALL found results up to 15, sorted nearest first.`,
+        prompt: (q, r) => `Search for ALL halal grocery stores and halal markets within ${r} miles of ${q}, USA. Prioritize those within the exact ZIP code or city first. Verify each name matches its address.`
       },
       farms: {
         label: 'halal farms', icon: '🌿',
-        system: (radius) => `Search the web for real halal farms, zabiha farms, and halal meat producers within ${radius} miles of the given US location. IMPORTANT: Only return actual farms, ranches, and halal meat producers — NOT grocery stores, restaurants, or supermarkets. CRITICAL: every name, address, and phone must be accurate. Return ONLY a raw JSON array, no markdown. Each object: name, address (full with city/state), phone (or null), rating (number or null), reviewCount (number or null), hours (string array or null), reviews (up to 2 real snippets or []), cuisine (string describing what they offer e.g. "Zabiha chicken, grass-fed beef" or null), lat (latitude number or null), lng (longitude number or null). Return real farm results only.`,
-        prompt: (q, r) => `Search for halal farms, zabiha farms, and halal meat producers within ${r} miles of ${q}, USA. Only include actual farms and ranches, not grocery stores.`
+        system: (radius) => `You are a halal food directory assistant. Search the web thoroughly for ALL real halal farms, zabiha farms, and halal meat producers near the given US location. IMPORTANT: Only return actual farms, ranches, and halal meat producers — NOT grocery stores, restaurants, or supermarkets. CRITICAL RULES: 1) Prioritize results within the exact ZIP code or city first, then expand outward to ${radius} miles, 2) Every name, address, and phone must be accurate, 3) Return ONLY a raw JSON array with no markdown or code fences. Each object: name, address (full with city/state), phone (or null), rating (number or null), reviewCount (number or null), hours (string array or null), reviews (up to 2 snippets or []), cuisine (string describing offerings e.g. "Zabiha chicken, grass-fed beef" or null), lat (null), lng (null). Return real farm results only, sorted nearest first.`,
+        prompt: (q, r) => `Search for ALL halal farms, zabiha farms, and halal meat producers within ${r} miles of ${q}, USA. Prioritize those within the exact ZIP code or city first. Only include actual farms and ranches, not grocery stores.`
       }
     };
 
@@ -247,8 +251,9 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            model: 'claude-haiku-4-5',
-            max_tokens: 1500,
+            model: 'claude-haiku-4-5-20251001',
+            max_tokens: 5000,
+            temperature: 0,
             tools: [{ type: 'web_search_20250305', name: 'web_search' }],
             system: config.system(radius),
             messages: [{ role: 'user', content: config.prompt(query, radius) }]
@@ -270,6 +275,10 @@
         }
         results = await enrichWithCoords(results);
         currentResults = results;
+        lastQuery = query;
+        lastRadius = radius;
+        lastConfig = config;
+        loadMorePage = 1;
         if (map) { markers.forEach(m => m.remove()); markers = []; map.remove(); map = null; }
         renderResults(results, query, radius, config);
       } catch(err) {
@@ -288,7 +297,50 @@
       statusBar.innerHTML = `Found <strong>${results.length} ${config.label}</strong> within ${radius} miles of ${query}`;
       document.getElementById('viewToggle').style.display = 'block';
       if (!results.length) { container.innerHTML = `<div class="empty-state"><span class="empty-icon">${config.icon}</span><h3>No results</h3><p>Try a broader radius or nearby city.</p></div>`; return; }
-      container.innerHTML = `<div class="results-grid">${results.map((r, i) => buildCard(r, i)).join('')}</div>`;
+      const grid = `<div class="results-grid" id="resultsGrid">${results.map((r, i) => buildCard(r, i)).join('')}</div>`;
+      const moreBtn = `<div style="text-align:center;margin-top:2rem;"><button class="search-btn" id="loadMoreBtn" onclick="loadMore()" style="margin:0 auto;height:44px;padding:0 28px;font-size:14px;">Load More Results</button></div>`;
+      container.innerHTML = grid + moreBtn;
+    }
+
+    async function loadMore() {
+      const btn = document.getElementById('loadMoreBtn');
+      btn.disabled = true;
+      btn.innerHTML = `<svg width="15" height="15" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" stroke="white" stroke-width="1.5" fill="none" stroke-dasharray="28" stroke-dashoffset="10"><animateTransform attributeName="transform" type="rotate" from="0 8 8" to="360 8 8" dur="0.8s" repeatCount="indefinite"/></circle></svg> Loading...`;
+      loadMorePage++;
+      const existingNames = new Set(currentResults.map(r => r.name?.toLowerCase().trim()));
+      const config = lastConfig;
+      try {
+        const response = await fetch(WORKER_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'claude-haiku-4-5-20251001',
+            max_tokens: 5000,
+            temperature: 0,
+            tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+            system: `You are a halal food directory assistant. Search the web for MORE ${config.label} near the given US location that were NOT already found. Search specifically for lesser-known or smaller establishments. Return ONLY a raw JSON array, no markdown or code fences. Each object: name, address (full with city/state), phone (or null), rating (number or null), reviewCount (number or null), hours (string array or null), reviews (up to 2 snippets or []), cuisine (string or null), lat (null), lng (null). Return up to 10 additional results sorted nearest first.`,
+            messages: [{ role: 'user', content: `Find MORE ${config.label} within ${lastRadius} miles of ${lastQuery}, USA. This is page ${loadMorePage} — find different ones not commonly listed. Already found: ${[...existingNames].join(', ')}.` }]
+          })
+        });
+        const data = await response.json();
+        const allText = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
+        const match = allText.match(/\[[\s\S]*\]/);
+        if (!match) throw new Error('No more results.');
+        let raw = match[0].replace(/[\u0000-\u001F\u007F]/g, ' ').replace(/,\s*([}\]])/g, '$1').trim();
+        let newResults = JSON.parse(raw);
+        newResults = newResults.filter(r => !existingNames.has(r.name?.toLowerCase().trim()));
+        newResults = await enrichWithCoords(newResults);
+        currentResults = [...currentResults, ...newResults];
+        const grid = document.getElementById('resultsGrid');
+        const startIdx = currentResults.length - newResults.length;
+        grid.innerHTML += newResults.map((r, i) => buildCard(r, startIdx + i)).join('');
+        document.getElementById('statusBar').innerHTML = `Found <strong>${currentResults.length} ${config.label}</strong> within ${lastRadius} miles of ${lastQuery}`;
+        btn.disabled = false;
+        btn.innerHTML = 'Load More Results';
+      } catch(err) {
+        btn.textContent = 'No more results found';
+        btn.disabled = true;
+      }
     }
 
     function buildCard(r, i) {
