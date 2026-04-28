@@ -271,22 +271,41 @@
       container.innerHTML = `<div class="loader"><div class="loader-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><p class="loader-text">Searching for ${config.label} within ${radius} miles of ${displayQuery}…</p></div>`;
 
       try {
-        const response = await fetch(WORKER_URL, {
+        // Call 1: web search to find businesses
+        container.innerHTML = `<div class="loader"><div class="loader-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><p class="loader-text">Searching the web for ${config.label} near ${displayQuery}…</p></div>`;
+        const searchResp = await fetch(WORKER_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'claude-haiku-4-5',
+            max_tokens: 4000,
+            tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+            system: `You are a halal business research assistant. Search the web thoroughly for halal ${activeTab} near the given location. Compile a comprehensive list of every halal business you find. Include name, full address, phone, rating, review count, hours, and a cuisine/product description for each. Be thorough — find as many real businesses as possible.`,
+            messages: [{ role: 'user', content: config.prompt(loc, radius) }]
+          })
+        });
+        if (!searchResp.ok) { const text = await searchResp.text(); throw new Error(`API error ${searchResp.status}: ${text.slice(0, 300)}`); }
+        const searchData = await searchResp.json();
+        const searchText = (searchData.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
+        if (!searchText.trim()) throw new Error('No search results returned. Please try again.');
+
+        // Call 2: format results as clean JSON
+        container.innerHTML = `<div class="loader"><div class="loader-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><p class="loader-text">Compiling results…</p></div>`;
+        const formatResp = await fetch(WORKER_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             model: 'claude-haiku-4-5',
             max_tokens: 5000,
-            tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-            system: config.system(radius, loc),
-            messages: [{ role: 'user', content: config.prompt(loc, radius) }]
+            system: `You convert business listing text into a JSON array. Output ONLY a raw JSON array — no markdown, no backticks, no explanation. Each object must have: name (string), address (full address with city and state, string), phone (string or null), rating (number or null), reviewCount (number or null), hours (array of strings like "Monday: 9am-9pm" or null), reviews (array of up to 2 short review snippets or []), cuisine (string describing the food/products or null), lat (number or null), lng (number or null). Only include businesses that are within ${radius} miles of ${displayQuery}.`,
+            messages: [{ role: 'user', content: `Convert this business listing information into a JSON array:\n\n${searchText}` }]
           })
         });
-        if (!response.ok) { const text = await response.text(); throw new Error(`API error ${response.status}: ${text.slice(0, 300)}`); }
-        const data = await response.json();
-        const allText = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
-        const match = allText.match(/\[[\s\S]*\]/);
-        if (!match) throw new Error('No results returned. Please try again.');
+        if (!formatResp.ok) { const text = await formatResp.text(); throw new Error(`Format error ${formatResp.status}: ${text.slice(0, 300)}`); }
+        const formatData = await formatResp.json();
+        const formatText = (formatData.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
+        const match = formatText.match(/\[[\s\S]*\]/);
+        if (!match) throw new Error('Could not format results. Please try again.');
         let raw = match[0].replace(/[\u0000-\u001F\u007F]/g, ' ').replace(/,\s*([}\]])/g, '$1').trim();
         let results;
         try { results = JSON.parse(raw); }
