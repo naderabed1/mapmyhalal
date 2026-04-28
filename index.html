@@ -17,184 +17,121 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --gold:        #b8860b;
-      --gold-mid:    #d4a017;
-      --gold-light:  #e8c547;
-      --gold-pale:   #f5e6b0;
-      --gold-soft:   #fdf6e3;
-      --green:       #1a5c2a;
-      --green-mid:   #2d7a3a;
-      --green-light: #3d9e4a;
-      --green-pale:  #c8e6c9;
-      --green-soft:  #e8f5e9;
-      --cream:       #faf8f2;
-      --warm-white:  #ffffff;
-      --ink:         #1a1a18;
-      --ink-mid:     #4a4a46;
-      --ink-light:   #8a8a84;
-      --border:      rgba(180,134,11,0.15);
-      --shadow:      0 4px 24px rgba(26,92,42,0.08);
-      --shadow-lg:   0 12px 48px rgba(26,92,42,0.14);
+      --gold: #b8860b; --gold-mid: #d4a017; --gold-light: #e8c547; --gold-pale: #f5e6b0; --gold-soft: #fdf6e3;
+      --green: #1a5c2a; --green-mid: #2d7a3a; --green-light: #3d9e4a; --green-pale: #c8e6c9; --green-soft: #e8f5e9;
+      --cream: #faf8f2; --warm-white: #ffffff; --ink: #1a1a18; --ink-mid: #4a4a46; --ink-light: #8a8a84;
+      --border: rgba(180,134,11,0.15); --shadow: 0 4px 24px rgba(26,92,42,0.08); --shadow-lg: 0 12px 48px rgba(26,92,42,0.14);
     }
     html { scroll-behavior: smooth; }
     body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--ink); min-height: 100vh; }
-
-    nav {
-      position: sticky; top: 0; z-index: 100;
-      background: rgba(250,248,242,0.92); backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border);
-      padding: 0 2rem; height: 64px;
-      display: flex; align-items: center; justify-content: space-between;
-    }
+    nav { position: sticky; top: 0; z-index: 1000; background: rgba(250,248,242,0.92); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); padding: 0 2rem; height: 64px; display: flex; align-items: center; justify-content: space-between; }
     .nav-logo { font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; font-weight: 600; color: var(--green); letter-spacing: 0.02em; text-decoration: none; }
     .nav-logo span { color: var(--gold); font-style: italic; }
     .nav-links { display: flex; gap: 1.5rem; align-items: center; }
     .nav-links a { font-size: 13px; color: var(--ink-mid); text-decoration: none; font-weight: 400; transition: color 0.15s; }
     .nav-links a:hover { color: var(--green-mid); }
-
-    .hero {
-      background: linear-gradient(160deg, var(--green) 0%, #1e6b2f 50%, var(--green-mid) 100%);
-      padding: 5rem 2rem 4rem; text-align: center; position: relative; overflow: hidden;
-    }
-    .hero::before {
-      content: ''; position: absolute; inset: 0;
-      background: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M40 0C17.9 0 0 17.9 0 40s17.9 40 40 40 40-17.9 40-40S62.1 0 40 0zm0 70C23.4 70 10 56.6 10 40S23.4 10 40 10s30 13.4 30 30-13.4 30-30 30z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-    }
+    .hero { background: linear-gradient(160deg, var(--green) 0%, #1e6b2f 50%, var(--green-mid) 100%); padding: 4rem 2rem 3rem; text-align: center; position: relative; overflow: hidden; }
+    .hero::before { content: ''; position: absolute; inset: 0; background: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M40 0C17.9 0 0 17.9 0 40s17.9 40 40 40 40-17.9 40-40S62.1 0 40 0zm0 70C23.4 70 10 56.6 10 40S23.4 10 40 10s30 13.4 30 30-13.4 30-30 30z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); }
     .hero-inner { position: relative; max-width: 720px; margin: 0 auto; }
     .hero-eyebrow { display: inline-block; font-size: 11px; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold-pale); margin-bottom: 1.2rem; padding: 4px 14px; border: 1px solid rgba(245,230,176,0.3); border-radius: 20px; }
-    .hero h1 { font-family: 'Cormorant Garamond', serif; font-size: clamp(2.4rem, 6vw, 3.8rem); font-weight: 600; color: #fff; line-height: 1.15; margin-bottom: 1rem; }
+    .hero h1 { font-family: 'Cormorant Garamond', serif; font-size: clamp(2.2rem, 5vw, 3.4rem); font-weight: 600; color: #fff; line-height: 1.15; margin-bottom: 0.75rem; }
     .hero h1 em { font-style: italic; color: var(--gold-pale); }
-    .hero-sub { font-size: 1rem; font-weight: 300; color: rgba(255,255,255,0.72); margin-bottom: 2.5rem; line-height: 1.6; }
-
-    /* TABS */
-    .tabs-wrap { background: var(--warm-white); border-radius: 16px; padding: 1.5rem; box-shadow: var(--shadow-lg); }
-    .tab-buttons { display: flex; gap: 8px; margin-bottom: 1.25rem; flex-wrap: wrap; }
-    .tab-btn {
-      flex: 1; min-width: 120px; height: 44px; border: 1.5px solid #e0ddd8;
-      border-radius: 10px; background: var(--cream);
-      font-family: 'Jost', sans-serif; font-size: 13.5px; font-weight: 500;
-      color: var(--ink-mid); cursor: pointer; transition: all 0.2s;
-      display: flex; align-items: center; justify-content: center; gap: 7px;
-    }
+    .hero-sub { font-size: 0.95rem; font-weight: 300; color: rgba(255,255,255,0.72); margin-bottom: 2rem; line-height: 1.6; }
+    .search-wrap { background: var(--warm-white); border-radius: 16px; padding: 1.25rem; box-shadow: var(--shadow-lg); }
+    .tab-buttons { display: flex; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap; }
+    .tab-btn { flex: 1; min-width: 100px; height: 42px; border: 1.5px solid #e0ddd8; border-radius: 10px; background: var(--cream); font-family: 'Jost', sans-serif; font-size: 13px; font-weight: 500; color: var(--ink-mid); cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; }
     .tab-btn:hover { border-color: var(--green-mid); color: var(--green-mid); }
     .tab-btn.active { background: var(--green); border-color: var(--green); color: #fff; }
-    .tab-icon { font-size: 16px; }
-
-    .search-row { display: flex; gap: 10px; flex-wrap: wrap; }
-    .search-input {
-      flex: 1; min-width: 200px; height: 48px; padding: 0 16px;
-      border: 1.5px solid #e0ddd8; border-radius: 10px;
-      font-family: 'Jost', sans-serif; font-size: 15px; color: var(--ink);
-      background: var(--cream); outline: none; transition: border-color 0.2s, box-shadow 0.2s;
-    }
+    .search-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .search-input { flex: 1; min-width: 160px; height: 46px; padding: 0 14px; border: 1.5px solid #e0ddd8; border-radius: 10px; font-family: 'Jost', sans-serif; font-size: 14px; color: var(--ink); background: var(--cream); outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
     .search-input:focus { border-color: var(--green-mid); box-shadow: 0 0 0 3px rgba(45,122,58,0.1); background: #fff; }
     .search-input::placeholder { color: var(--ink-light); }
-    .search-btn {
-      height: 48px; padding: 0 28px; background: var(--green-mid); color: #fff;
-      border: none; border-radius: 10px; font-family: 'Jost', sans-serif;
-      font-size: 15px; font-weight: 500; cursor: pointer;
-      transition: background 0.2s, transform 0.1s; white-space: nowrap;
-      display: flex; align-items: center; gap: 8px;
-    }
+    .radius-select { height: 46px; padding: 0 12px; border: 1.5px solid #e0ddd8; border-radius: 10px; font-family: 'Jost', sans-serif; font-size: 14px; color: var(--ink-mid); background: var(--cream); outline: none; cursor: pointer; min-width: 110px; }
+    .radius-select:focus { border-color: var(--green-mid); }
+    .search-btn { height: 46px; padding: 0 24px; background: var(--green-mid); color: #fff; border: none; border-radius: 10px; font-family: 'Jost', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: background 0.2s, transform 0.1s; white-space: nowrap; display: flex; align-items: center; gap: 8px; }
     .search-btn:hover { background: var(--green); }
     .search-btn:active { transform: scale(0.97); }
     .search-btn:disabled { background: #9FE1CB; cursor: not-allowed; }
-    .search-hint { margin-top: 0.75rem; font-size: 12px; color: var(--ink-light); text-align: left; }
+    .search-hint { margin-top: 0.6rem; font-size: 12px; color: var(--ink-light); text-align: left; }
     .search-hint strong { color: var(--ink-mid); font-weight: 500; }
-
-    main { max-width: 1100px; margin: 0 auto; padding: 3rem 2rem 5rem; }
-    #statusBar { text-align: center; font-size: 14px; color: var(--ink-mid); margin-bottom: 1.5rem; min-height: 22px; font-weight: 300; }
+    main { max-width: 1100px; margin: 0 auto; padding: 2.5rem 2rem 5rem; }
+    #statusBar { text-align: center; font-size: 14px; color: var(--ink-mid); margin-bottom: 1rem; min-height: 22px; font-weight: 300; }
     #statusBar strong { font-weight: 500; color: var(--green); }
     .error-box { background: #fff5f5; border: 1px solid #fcc; border-radius: 10px; padding: 1rem 1.25rem; color: #8b2020; font-size: 13.5px; margin-bottom: 1.5rem; display: none; }
-
+    .view-toggle { display: flex; gap: 8px; justify-content: center; margin-bottom: 1.5rem; }
+    .view-btn { height: 36px; padding: 0 16px; border: 1.5px solid var(--border); border-radius: 8px; background: var(--warm-white); font-family: 'Jost', sans-serif; font-size: 13px; font-weight: 500; color: var(--ink-mid); cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 6px; }
+    .view-btn.active { background: var(--green); border-color: var(--green); color: #fff; }
+    #mapContainer { width: 100%; height: 450px; border-radius: 14px; overflow: hidden; margin-bottom: 2rem; display: none; border: 1px solid var(--border); }
     .empty-state { text-align: center; padding: 4rem 1rem; color: var(--ink-light); }
-    .empty-icon { width: 64px; height: 64px; background: var(--green-soft); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem; font-size: 28px; }
+    .empty-icon { font-size: 40px; margin-bottom: 1rem; display: block; }
     .empty-state h3 { font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; color: var(--ink-mid); margin-bottom: 0.5rem; }
     .empty-state p { font-size: 14px; font-weight: 300; }
-
     .loader { display: flex; flex-direction: column; align-items: center; gap: 1.25rem; padding: 4rem 1rem; }
     .loader-dots { display: flex; gap: 8px; }
     .dot { width: 10px; height: 10px; background: var(--green-mid); border-radius: 50%; animation: bop 1.1s ease-in-out infinite; }
-    .dot:nth-child(2) { animation-delay: 0.18s; }
-    .dot:nth-child(3) { animation-delay: 0.36s; }
+    .dot:nth-child(2) { animation-delay: 0.18s; } .dot:nth-child(3) { animation-delay: 0.36s; }
     @keyframes bop { 0%,80%,100% { transform: translateY(0); opacity: 0.35; } 40% { transform: translateY(-8px); opacity: 1; } }
     .loader-text { font-size: 14px; color: var(--ink-light); font-weight: 300; font-style: italic; }
-
-    .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 18px; }
-    .result-card { background: var(--warm-white); border: 1px solid var(--border); border-radius: 14px; padding: 1.4rem 1.5rem; box-shadow: var(--shadow); transition: transform 0.2s, box-shadow 0.2s; }
+    .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 16px; }
+    .result-card { background: var(--warm-white); border: 1px solid var(--border); border-radius: 14px; padding: 1.25rem 1.4rem; box-shadow: var(--shadow); transition: transform 0.2s, box-shadow 0.2s; }
     .result-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
-    .card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 12px; }
-    .card-number { font-size: 11px; font-weight: 500; color: var(--gold-mid); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px; }
-    .card-name { font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; font-weight: 600; color: var(--green); line-height: 1.25; }
-    .rating-badge { background: var(--gold-soft); border: 1px solid var(--gold-pale); color: var(--green); font-size: 12px; font-weight: 500; padding: 4px 10px; border-radius: 20px; white-space: nowrap; flex-shrink: 0; display: flex; align-items: center; gap: 3px; }
+    .card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+    .card-number { font-size: 11px; font-weight: 500; color: var(--gold-mid); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 3px; }
+    .card-name { font-family: 'Cormorant Garamond', serif; font-size: 1.15rem; font-weight: 600; color: var(--green); line-height: 1.25; }
+    .rating-badge { background: var(--gold-soft); border: 1px solid var(--gold-pale); color: var(--green); font-size: 12px; font-weight: 500; padding: 3px 9px; border-radius: 20px; white-space: nowrap; flex-shrink: 0; display: flex; align-items: center; gap: 3px; }
     .star-icon { color: var(--gold-mid); font-size: 11px; }
-    .card-divider { height: 1px; background: var(--border); margin: 12px 0; }
-    .card-detail { display: flex; align-items: flex-start; gap: 10px; font-size: 13.5px; color: var(--ink-mid); margin-bottom: 8px; line-height: 1.45; }
-    .detail-icon { flex-shrink: 0; width: 16px; height: 16px; margin-top: 1px; color: var(--green-mid); opacity: 0.7; }
-    .halal-badge { display: inline-flex; align-items: center; gap: 4px; background: var(--green-soft); border: 1px solid var(--green-pale); color: var(--green); font-size: 11px; font-weight: 500; padding: 3px 9px; border-radius: 20px; margin-bottom: 8px; }
-    details { margin-top: 4px; }
-    details summary { font-size: 12.5px; color: var(--green-mid); cursor: pointer; list-style: none; user-select: none; display: inline-flex; align-items: center; gap: 4px; font-weight: 500; }
+    .card-divider { height: 1px; background: var(--border); margin: 10px 0; }
+    .card-detail { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; color: var(--ink-mid); margin-bottom: 7px; line-height: 1.45; }
+    .detail-icon { flex-shrink: 0; width: 15px; height: 15px; margin-top: 1px; color: var(--green-mid); opacity: 0.7; }
+    .halal-badge { display: inline-flex; align-items: center; gap: 4px; background: var(--green-soft); border: 1px solid var(--green-pale); color: var(--green); font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 20px; margin-bottom: 8px; }
+    details { margin-top: 3px; }
+    details summary { font-size: 12px; color: var(--green-mid); cursor: pointer; list-style: none; user-select: none; display: inline-flex; align-items: center; gap: 4px; font-weight: 500; }
     details summary::-webkit-details-marker { display: none; }
     details summary::after { content: ' ▾'; font-size: 10px; }
     details[open] summary::after { content: ' ▴'; }
-    .hours-grid { margin-top: 8px; display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; font-size: 12.5px; color: var(--ink-mid); padding: 10px 12px; background: var(--green-soft); border-radius: 8px; }
+    .hours-grid { margin-top: 6px; display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; font-size: 12px; color: var(--ink-mid); padding: 8px 10px; background: var(--green-soft); border-radius: 8px; }
     .hours-day { font-weight: 500; color: var(--green); }
-    .reviews-section { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
-    .reviews-label { font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-light); margin-bottom: 8px; }
-    .review-item { font-size: 13px; color: var(--ink-mid); font-style: italic; line-height: 1.6; margin-bottom: 8px; padding: 8px 12px; background: var(--cream); border-left: 3px solid var(--gold-pale); border-radius: 0 6px 6px 0; }
-
+    .reviews-section { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+    .reviews-label { font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-light); margin-bottom: 6px; }
+    .review-item { font-size: 12.5px; color: var(--ink-mid); font-style: italic; line-height: 1.6; margin-bottom: 6px; padding: 7px 10px; background: var(--cream); border-left: 3px solid var(--gold-pale); border-radius: 0 6px 6px 0; }
     footer { background: var(--green); color: rgba(255,255,255,0.55); text-align: center; padding: 2rem; font-size: 13px; font-weight: 300; }
     footer strong { color: rgba(255,255,255,0.85); font-weight: 500; }
     footer a { color: rgba(255,255,255,0.55); text-decoration: none; transition: color 0.15s; }
     footer a:hover { color: rgba(255,255,255,0.85); }
     .footer-links { display: flex; justify-content: center; gap: 1.5rem; margin-top: 0.75rem; }
-
-    @media (max-width: 600px) {
-      nav { padding: 0 1rem; }
-      .hero { padding: 3.5rem 1.25rem 3rem; }
-      main { padding: 2rem 1.25rem 4rem; }
-      .results-grid { grid-template-columns: 1fr; }
-      .tab-btn { font-size: 12px; }
-    }
+    @media (max-width: 600px) { nav { padding: 0 1rem; } .hero { padding: 3rem 1.25rem 2.5rem; } main { padding: 2rem 1.25rem 4rem; } .results-grid { grid-template-columns: 1fr; } .tab-btn { font-size: 12px; } }
   </style>
 </head>
 <body>
-
   <nav>
     <a class="nav-logo" href="index.html">Map<span>MyHalal</span></a>
-    <div class="nav-links">
-      <a href="about.html">About</a>
-      <a href="privacy.html">Privacy</a>
-    </div>
+    <div class="nav-links"><a href="about.html">About</a><a href="privacy.html">Privacy</a></div>
   </nav>
-
   <section class="hero">
     <div class="hero-inner">
       <span class="hero-eyebrow">United States Halal Directory</span>
       <h1>Find <em>Halal</em> Near You</h1>
-      <p class="hero-sub">Search any city or ZIP code to discover halal restaurants, grocery stores, and farms across the United States — with addresses, phone numbers, hours, and reviews.</p>
-      <div class="tabs-wrap">
+      <p class="hero-sub">Search any city or ZIP code to discover halal restaurants, grocery stores, and farms across the United States.</p>
+      <div class="search-wrap">
         <div class="tab-buttons">
-          <button class="tab-btn active" onclick="setTab('restaurants')" id="tab-restaurants">
-            <span class="tab-icon">🍽️</span> Restaurants
-          </button>
-          <button class="tab-btn" onclick="setTab('grocery')" id="tab-grocery">
-            <span class="tab-icon">🛒</span> Grocery Stores
-          </button>
-          <button class="tab-btn" onclick="setTab('farms')" id="tab-farms">
-            <span class="tab-icon">🌿</span> Farms
-          </button>
+          <button class="tab-btn active" onclick="setTab('restaurants')" id="tab-restaurants"><span>🍽️</span> Restaurants</button>
+          <button class="tab-btn" onclick="setTab('grocery')" id="tab-grocery"><span>🛒</span> Grocery Stores</button>
+          <button class="tab-btn" onclick="setTab('farms')" id="tab-farms"><span>🌿</span> Farms</button>
         </div>
         <div class="search-row">
-          <input type="text" id="searchInput" class="search-input" placeholder="Enter city or ZIP code (e.g. Dearborn, MI or 07001)" autocomplete="off" />
+          <input type="text" id="searchInput" class="search-input" placeholder="Enter city or ZIP code (e.g. Dearborn, MI)" autocomplete="off" />
+          <select id="radiusSelect" class="radius-select">
+            <option value="5">Within 5 mi</option>
+            <option value="10" selected>Within 10 mi</option>
+            <option value="25">Within 25 mi</option>
+            <option value="50">Within 50 mi</option>
+          </select>
           <button class="search-btn" id="searchBtn" onclick="doSearch()">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" stroke-width="1.5"/>
-              <path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-            </svg>
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
             Search
           </button>
         </div>
@@ -202,153 +139,176 @@
       </div>
     </div>
   </section>
-
   <main>
     <div id="statusBar"></div>
     <div class="error-box" id="errorBox"></div>
+    <div id="viewToggle" style="display:none;">
+      <div class="view-toggle">
+        <button class="view-btn active" id="listViewBtn" onclick="showView('list')">☰ List</button>
+        <button class="view-btn" id="mapViewBtn" onclick="showView('map')">🗺 Map</button>
+      </div>
+    </div>
+    <div id="mapContainer"></div>
     <div id="resultsContainer">
       <div class="empty-state">
-        <div class="empty-icon">🌙</div>
+        <span class="empty-icon">🌙</span>
         <h3>Ready to search</h3>
-        <p>Select a category above and enter any U.S. city or ZIP code to find halal businesses near you.</p>
+        <p>Select a category above and enter any U.S. city or ZIP code.</p>
       </div>
     </div>
   </main>
-
   <footer>
     <strong>MapMyHalal.com</strong> &nbsp;·&nbsp; Finding halal food across the United States
-    <div class="footer-links">
-      <a href="about.html">About</a>
-      <a href="privacy.html">Privacy Policy</a>
-    </div>
+    <div class="footer-links"><a href="about.html">About</a><a href="privacy.html">Privacy Policy</a></div>
   </footer>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const WORKER_URL = 'https://mapmyspa.nader-h-abed.workers.dev';
+    let activeTab = 'restaurants';
+    let currentResults = [];
+    let map = null;
+    let markers = [];
 
-<script>
-  const WORKER_URL = 'https://mapmyspa.nader-h-abed.workers.dev';
-  let activeTab = 'restaurants';
-
-  const tabConfig = {
-    restaurants: {
-      label: 'halal restaurants',
-      icon: '🍽️',
-      system: `Search the web for real halal restaurants near the given US location. CRITICAL: every name, address, and phone must match exactly — never mix details from different businesses. Return ONLY a raw JSON array, no markdown, no code fences. Each object: name, address (verified full address with city/state), phone (or null), rating (number or null), reviewCount (number or null), hours (string array or null), reviews (up to 2 real snippets or []), cuisine (string or null). Only include businesses you can verify exist at that exact address.`,
-      prompt: (q) => `List real halal restaurants near ${q}, USA. Include a variety of cuisines.`
-    },
-    grocery: {
-      label: 'halal grocery stores',
-      icon: '🛒',
-      system: `Search the web for real halal grocery stores and markets near the given US location. CRITICAL: every name, address, and phone must match exactly — never mix details from different businesses. Return ONLY a raw JSON array, no markdown, no code fences. Each object: name, address (verified full address with city/state), phone (or null), rating (number or null), reviewCount (number or null), hours (string array or null), reviews (up to 2 real snippets or []), cuisine (string or null). Only include businesses you can verify exist at that exact address.`,
-      prompt: (q) => `List real halal grocery stores, halal markets, and halal butcher shops near ${q}, USA.`
-    },
-    farms: {
-      label: 'halal farms',
-      icon: '🌿',
-      system: `Search the web for real halal farms, zabiha farms, and halal meat producers near the given US location. CRITICAL: every name, address, and phone must match exactly — never mix details from different businesses. Return ONLY a raw JSON array, no markdown, no code fences. Each object: name, address (verified full address with city/state), phone (or null), rating (number or null), reviewCount (number or null), hours (string array or null), reviews (up to 2 real snippets or []), cuisine (string or null). Only include businesses you can verify exist at that exact address.`,
-      prompt: (q) => `List real halal farms, zabiha farms, and halal meat producers near ${q}, USA.`
-    }
-  };
-
-  function setTab(tab) {
-    activeTab = tab;
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById('tab-' + tab).classList.add('active');
-    const placeholders = {
-      restaurants: 'Enter city or ZIP code (e.g. Dearborn, MI or 07001)',
-      grocery: 'Enter city or ZIP code (e.g. Brooklyn, NY or 10001)',
-      farms: 'Enter city or ZIP code (e.g. Houston, TX or 77001)'
-    };
-    document.getElementById('searchInput').placeholder = placeholders[tab];
-  }
-
-  document.getElementById('searchInput').addEventListener('keydown', e => {
-    if (e.key === 'Enter') doSearch();
-  });
-
-  async function doSearch() {
-    const query = document.getElementById('searchInput').value.trim();
-    if (!query) return;
-    const btn = document.getElementById('searchBtn');
-    const container = document.getElementById('resultsContainer');
-    const statusBar = document.getElementById('statusBar');
-    const errorBox = document.getElementById('errorBox');
-    const config = tabConfig[activeTab];
-
-    btn.disabled = true;
-    btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" stroke="white" stroke-width="1.5" fill="none" stroke-dasharray="28" stroke-dashoffset="10"><animateTransform attributeName="transform" type="rotate" from="0 8 8" to="360 8 8" dur="0.8s" repeatCount="indefinite"/></circle></svg> Searching...`;
-    statusBar.innerHTML = '';
-    errorBox.style.display = 'none';
-    container.innerHTML = `<div class="loader"><div class="loader-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><p class="loader-text">Searching for ${config.label} near ${query}…</p></div>`;
-
-    try {
-      const response = await fetch(WORKER_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'claude-haiku-4-5',
-          max_tokens: 1500,
-          tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-          system: config.system,
-          messages: [{ role: 'user', content: config.prompt(query) }]
-        })
-      });
-
-      if (!response.ok) { const text = await response.text(); throw new Error(`API error ${response.status}: ${text.slice(0, 300)}`); }
-
-      const data = await response.json();
-      const allText = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
-      const match = allText.match(/\[[\s\S]*\]/);
-      if (!match) throw new Error('No results returned. Please try again.');
-
-      let raw = match[0].replace(/[\u0000-\u001F\u007F]/g, ' ').replace(/,\s*([}\]])/g, '$1').trim();
-      let results;
-      try {
-        results = JSON.parse(raw);
-      } catch(e) {
-        const objects = [];
-        const objMatches = raw.match(/\{[^{}]*\}/g) || [];
-        for (const obj of objMatches) { try { objects.push(JSON.parse(obj)); } catch(e2) {} }
-        if (objects.length === 0) throw new Error('Could not parse results. Please try again.');
-        results = objects;
+    const tabConfig = {
+      restaurants: {
+        label: 'halal restaurants', icon: '🍽️',
+        system: (radius) => `Search the web for real halal restaurants within ${radius} miles of the given US location. CRITICAL: every name, address, and phone must be accurate and match the same business — never mix details from different businesses. Return ONLY a raw JSON array, no markdown. Each object: name, address (full with city/state), phone (or null), rating (number or null), reviewCount (number or null), hours (string array or null), reviews (up to 2 real snippets or []), cuisine (string or null), lat (latitude number or null), lng (longitude number or null). Return 8-12 verified results.`,
+        prompt: (q, r) => `Search for halal restaurants within ${r} miles of ${q}, USA. Verify each name matches its address.`
+      },
+      grocery: {
+        label: 'halal grocery stores', icon: '🛒',
+        system: (radius) => `Search the web for real halal grocery stores and halal markets within ${radius} miles of the given US location. CRITICAL: every name, address, and phone must be accurate — never mix details from different businesses. Return ONLY a raw JSON array, no markdown. Each object: name, address (full with city/state), phone (or null), rating (number or null), reviewCount (number or null), hours (string array or null), reviews (up to 2 real snippets or []), cuisine (string or null), lat (latitude number or null), lng (longitude number or null). Return 8-12 verified results.`,
+        prompt: (q, r) => `Search for halal grocery stores and halal markets within ${r} miles of ${q}, USA. Verify each name matches its address.`
+      },
+      farms: {
+        label: 'halal farms', icon: '🌿',
+        system: (radius) => `Search the web for real halal farms, zabiha farms, and halal meat producers within ${radius} miles of the given US location. IMPORTANT: Only return actual farms, ranches, and halal meat producers — NOT grocery stores, restaurants, or supermarkets. CRITICAL: every name, address, and phone must be accurate. Return ONLY a raw JSON array, no markdown. Each object: name, address (full with city/state), phone (or null), rating (number or null), reviewCount (number or null), hours (string array or null), reviews (up to 2 real snippets or []), cuisine (string describing what they offer e.g. "Zabiha chicken, grass-fed beef" or null), lat (latitude number or null), lng (longitude number or null). Return real farm results only.`,
+        prompt: (q, r) => `Search for halal farms, zabiha farms, and halal meat producers within ${r} miles of ${q}, USA. Only include actual farms and ranches, not grocery stores.`
       }
+    };
 
-      renderResults(results, query, config);
-
-    } catch(err) {
-      container.innerHTML = `<div class="empty-state"><div class="empty-icon">🌙</div><h3>No results found</h3><p>Try a different city name or ZIP code.</p></div>`;
-      errorBox.textContent = 'Error: ' + err.message;
-      errorBox.style.display = 'block';
-    } finally {
-      btn.disabled = false;
-      btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> Search`;
+    function setTab(tab) {
+      activeTab = tab;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('tab-' + tab).classList.add('active');
+      const placeholders = { restaurants: 'City or ZIP (e.g. Dearborn, MI)', grocery: 'City or ZIP (e.g. Brooklyn, NY)', farms: 'City or ZIP (e.g. Houston, TX)' };
+      document.getElementById('searchInput').placeholder = placeholders[tab];
     }
-  }
 
-  function renderResults(results, query, config) {
-    const container = document.getElementById('resultsContainer');
-    document.getElementById('statusBar').innerHTML = `Found <strong>${results.length} ${config.label}</strong> near ${query}`;
-    if (!results.length) { container.innerHTML = `<div class="empty-state"><div class="empty-icon">${config.icon}</div><h3>No results</h3><p>Try a broader search or nearby city.</p></div>`; return; }
-    container.innerHTML = `<div class="results-grid">${results.map((r, i) => buildCard(r, i)).join('')}</div>`;
-  }
-
-  function buildCard(r, i) {
-    const ratingHtml = r.rating != null ? `<div class="rating-badge"><span class="star-icon">★</span>${Number(r.rating).toFixed(1)}${r.reviewCount ? ` <span style="opacity:0.6;font-weight:300">(${r.reviewCount.toLocaleString()})</span>` : ''}</div>` : '';
-    let hoursHtml = '';
-    if (r.hours && r.hours.length) {
-      const rows = r.hours.map(h => { const idx = h.indexOf(':'); if (idx === -1) return `<span class="hours-day">${h}</span><span></span>`; return `<span class="hours-day">${h.slice(0,idx).trim()}</span><span>${h.slice(idx+1).trim()}</span>`; }).join('');
-      hoursHtml = `<details><summary>View hours</summary><div class="hours-grid">${rows}</div></details>`;
+    function showView(view) {
+      document.getElementById('listViewBtn').classList.toggle('active', view === 'list');
+      document.getElementById('mapViewBtn').classList.toggle('active', view === 'map');
+      document.getElementById('mapContainer').style.display = view === 'map' ? 'block' : 'none';
+      document.getElementById('resultsContainer').style.display = view === 'list' ? 'block' : 'none';
+      if (view === 'map') initMap();
     }
-    const reviewsHtml = r.reviews && r.reviews.length ? `<div class="reviews-section"><div class="reviews-label">What people say</div>${r.reviews.map(rv => `<div class="review-item">"${rv}"</div>`).join('')}</div>` : '';
-    const cuisineHtml = r.cuisine ? `<div class="halal-badge">✓ Halal &nbsp;·&nbsp; ${r.cuisine}</div>` : `<div class="halal-badge">✓ Halal Certified</div>`;
-    return `<div class="result-card">
-      <div class="card-header"><div><div class="card-number">No. ${String(i+1).padStart(2,'0')}</div><div class="card-name">${r.name||'Halal Business'}</div></div>${ratingHtml}</div>
-      ${cuisineHtml}
-      <div class="card-divider"></div>
-      ${r.address?`<div class="card-detail"><svg class="detail-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1C5.24 1 3 3.24 3 6c0 3.75 5 9 5 9s5-5.25 5-9c0-2.76-2.24-5-5-5zm0 6.5A1.5 1.5 0 1 1 8 4a1.5 1.5 0 0 1 0 3z"/></svg>${r.address}</div>`:''}
-      ${r.phone?`<div class="card-detail"><svg class="detail-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M13.5 10.5l-2-2a1 1 0 0 0-1.4 0l-.9.9a8.3 8.3 0 0 1-3.6-3.6l.9-.9a1 1 0 0 0 0-1.4l-2-2A1 1 0 0 0 3 2L2 3C1 4 2 8 5.5 11.5S12 15 13 14l1-1a1 1 0 0 0-.5-2.5z"/></svg><a href="tel:${r.phone.replace(/\D/g,'')}" style="color:inherit;text-decoration:none;">${r.phone}</a></div>`:''}
-      ${hoursHtml?`<div class="card-detail">${hoursHtml}</div>`:''}
-      ${reviewsHtml}
-    </div>`;
-  }
-</script>
+
+    function initMap() {
+      const validResults = currentResults.filter(r => r.lat && r.lng);
+      if (!validResults.length) { document.getElementById('mapContainer').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;font-family:Jost,sans-serif;color:#8a8a84;font-size:14px;">No map coordinates available for these results.</div>'; return; }
+      if (!map) {
+        map = L.map('mapContainer').setView([validResults[0].lat, validResults[0].lng], 12);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors' }).addTo(map);
+      } else {
+        markers.forEach(m => m.remove());
+        markers = [];
+        map.setView([validResults[0].lat, validResults[0].lng], 12);
+      }
+      const greenIcon = L.divIcon({ className: '', html: '<div style="background:#2d7a3a;width:28px;height:28px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.3);"></div>', iconSize: [28, 28], iconAnchor: [14, 28] });
+      validResults.forEach((r, i) => {
+        const marker = L.marker([r.lat, r.lng], { icon: greenIcon }).addTo(map);
+        marker.bindPopup(`<strong style="font-family:Cormorant Garamond,serif;font-size:15px;color:#1a5c2a;">${r.name}</strong><br><span style="font-size:12px;color:#4a4a46;">${r.address || ''}</span>${r.phone ? `<br><span style="font-size:12px;">📞 ${r.phone}</span>` : ''}`);
+        markers.push(marker);
+      });
+      if (validResults.length > 1) { const group = L.featureGroup(markers); map.fitBounds(group.getBounds().pad(0.1)); }
+    }
+
+    document.getElementById('searchInput').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+
+    async function doSearch() {
+      const query = document.getElementById('searchInput').value.trim();
+      const radius = document.getElementById('radiusSelect').value;
+      if (!query) return;
+      const btn = document.getElementById('searchBtn');
+      const container = document.getElementById('resultsContainer');
+      const statusBar = document.getElementById('statusBar');
+      const errorBox = document.getElementById('errorBox');
+      const config = tabConfig[activeTab];
+      btn.disabled = true;
+      btn.innerHTML = `<svg width="15" height="15" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" stroke="white" stroke-width="1.5" fill="none" stroke-dasharray="28" stroke-dashoffset="10"><animateTransform attributeName="transform" type="rotate" from="0 8 8" to="360 8 8" dur="0.8s" repeatCount="indefinite"/></circle></svg> Searching...`;
+      statusBar.innerHTML = '';
+      errorBox.style.display = 'none';
+      document.getElementById('viewToggle').style.display = 'none';
+      document.getElementById('mapContainer').style.display = 'none';
+      showView('list');
+      container.innerHTML = `<div class="loader"><div class="loader-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><p class="loader-text">Searching for ${config.label} within ${radius} miles of ${query}…</p></div>`;
+      try {
+        const response = await fetch(WORKER_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'claude-haiku-4-5',
+            max_tokens: 1500,
+            tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+            system: config.system(radius),
+            messages: [{ role: 'user', content: config.prompt(query, radius) }]
+          })
+        });
+        if (!response.ok) { const text = await response.text(); throw new Error(`API error ${response.status}: ${text.slice(0, 300)}`); }
+        const data = await response.json();
+        const allText = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
+        const match = allText.match(/\[[\s\S]*\]/);
+        if (!match) throw new Error('No results returned. Please try again.');
+        let raw = match[0].replace(/[\u0000-\u001F\u007F]/g, ' ').replace(/,\s*([}\]])/g, '$1').trim();
+        let results;
+        try { results = JSON.parse(raw); }
+        catch(e) {
+          const objects = []; const objMatches = raw.match(/\{[^{}]*\}/g) || [];
+          for (const obj of objMatches) { try { objects.push(JSON.parse(obj)); } catch(e2) {} }
+          if (objects.length === 0) throw new Error('Could not parse results. Please try again.');
+          results = objects;
+        }
+        currentResults = results;
+        if (map) { markers.forEach(m => m.remove()); markers = []; map.remove(); map = null; }
+        renderResults(results, query, radius, config);
+      } catch(err) {
+        container.innerHTML = `<div class="empty-state"><span class="empty-icon">${config.icon}</span><h3>No results found</h3><p>Try a different city or increase the radius.</p></div>`;
+        errorBox.textContent = 'Error: ' + err.message;
+        errorBox.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<svg width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> Search`;
+      }
+    }
+
+    function renderResults(results, query, radius, config) {
+      const container = document.getElementById('resultsContainer');
+      const statusBar = document.getElementById('statusBar');
+      statusBar.innerHTML = `Found <strong>${results.length} ${config.label}</strong> within ${radius} miles of ${query}`;
+      document.getElementById('viewToggle').style.display = 'block';
+      if (!results.length) { container.innerHTML = `<div class="empty-state"><span class="empty-icon">${config.icon}</span><h3>No results</h3><p>Try a broader radius or nearby city.</p></div>`; return; }
+      container.innerHTML = `<div class="results-grid">${results.map((r, i) => buildCard(r, i)).join('')}</div>`;
+    }
+
+    function buildCard(r, i) {
+      const ratingHtml = r.rating != null ? `<div class="rating-badge"><span class="star-icon">★</span>${Number(r.rating).toFixed(1)}${r.reviewCount ? ` <span style="opacity:0.6;font-weight:300">(${r.reviewCount.toLocaleString()})</span>` : ''}</div>` : '';
+      let hoursHtml = '';
+      if (r.hours && r.hours.length) {
+        const rows = r.hours.map(h => { const idx = h.indexOf(':'); if (idx === -1) return `<span class="hours-day">${h}</span><span></span>`; return `<span class="hours-day">${h.slice(0,idx).trim()}</span><span>${h.slice(idx+1).trim()}</span>`; }).join('');
+        hoursHtml = `<details><summary>View hours</summary><div class="hours-grid">${rows}</div></details>`;
+      }
+      const reviewsHtml = r.reviews && r.reviews.length ? `<div class="reviews-section"><div class="reviews-label">What people say</div>${r.reviews.map(rv => `<div class="review-item">"${rv}"</div>`).join('')}</div>` : '';
+      const cuisineHtml = r.cuisine ? `<div class="halal-badge">✓ Halal &nbsp;·&nbsp; ${r.cuisine}</div>` : `<div class="halal-badge">✓ Halal</div>`;
+      return `<div class="result-card">
+        <div class="card-header"><div><div class="card-number">No. ${String(i+1).padStart(2,'0')}</div><div class="card-name">${r.name||'Halal Business'}</div></div>${ratingHtml}</div>
+        ${cuisineHtml}
+        <div class="card-divider"></div>
+        ${r.address?`<div class="card-detail"><svg class="detail-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1C5.24 1 3 3.24 3 6c0 3.75 5 9 5 9s5-5.25 5-9c0-2.76-2.24-5-5-5zm0 6.5A1.5 1.5 0 1 1 8 4a1.5 1.5 0 0 1 0 3z"/></svg>${r.address}</div>`:''}
+        ${r.phone?`<div class="card-detail"><svg class="detail-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M13.5 10.5l-2-2a1 1 0 0 0-1.4 0l-.9.9a8.3 8.3 0 0 1-3.6-3.6l.9-.9a1 1 0 0 0 0-1.4l-2-2A1 1 0 0 0 3 2L2 3C1 4 2 8 5.5 11.5S12 15 13 14l1-1a1 1 0 0 0-.5-2.5z"/></svg><a href="tel:${r.phone.replace(/\D/g,'')}" style="color:inherit;text-decoration:none;">${r.phone}</a></div>`:''}
+        ${hoursHtml?`<div class="card-detail">${hoursHtml}</div>`:''}
+        ${reviewsHtml}
+      </div>`;
+    }
+  </script>
 </body>
 </html>
