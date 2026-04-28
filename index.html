@@ -231,19 +231,19 @@
     restaurants: {
       label: 'halal restaurants',
       icon: '🍽️',
-      system: `Search the web for real halal restaurants near the given US location. Return ONLY a raw JSON array, no markdown, no code fences. Each object: name, address (full with city/state), phone (or null), rating (number or null), reviewCount (number or null), hours (string array or null), reviews (up to 2 snippets or []), cuisine (string or null). Return 8-12 real results.`,
+      system: `Search the web for real halal restaurants near the given US location. CRITICAL: every name, address, and phone must match exactly — never mix details from different businesses. Return ONLY a raw JSON array, no markdown, no code fences. Each object: name, address (verified full address with city/state), phone (or null), rating (number or null), reviewCount (number or null), hours (string array or null), reviews (up to 2 real snippets or []), cuisine (string or null). Only include businesses you can verify exist at that exact address.`,
       prompt: (q) => `List real halal restaurants near ${q}, USA. Include a variety of cuisines.`
     },
     grocery: {
       label: 'halal grocery stores',
       icon: '🛒',
-      system: `Search the web for real halal grocery stores and halal markets near the given US location. Return ONLY a raw JSON array, no markdown, no code fences. Each object: name, address (full with city/state), phone (or null), rating (number or null), reviewCount (number or null), hours (string array or null), reviews (up to 2 snippets or []), cuisine (string or null). Return 8-12 real results.`,
+      system: `Search the web for real halal grocery stores and markets near the given US location. CRITICAL: every name, address, and phone must match exactly — never mix details from different businesses. Return ONLY a raw JSON array, no markdown, no code fences. Each object: name, address (verified full address with city/state), phone (or null), rating (number or null), reviewCount (number or null), hours (string array or null), reviews (up to 2 real snippets or []), cuisine (string or null). Only include businesses you can verify exist at that exact address.`,
       prompt: (q) => `List real halal grocery stores, halal markets, and halal butcher shops near ${q}, USA.`
     },
     farms: {
       label: 'halal farms',
       icon: '🌿',
-      system: `Search the web for real halal farms, zabiha farms, and halal meat producers near the given US location. Return ONLY a raw JSON array, no markdown, no code fences. Each object: name, address (full with city/state), phone (or null), rating (number or null), reviewCount (number or null), hours (string array or null), reviews (up to 2 snippets or []), cuisine (string or null). Return as many real results as possible.`,
+      system: `Search the web for real halal farms, zabiha farms, and halal meat producers near the given US location. CRITICAL: every name, address, and phone must match exactly — never mix details from different businesses. Return ONLY a raw JSON array, no markdown, no code fences. Each object: name, address (verified full address with city/state), phone (or null), rating (number or null), reviewCount (number or null), hours (string array or null), reviews (up to 2 real snippets or []), cuisine (string or null). Only include businesses you can verify exist at that exact address.`,
       prompt: (q) => `List real halal farms, zabiha farms, and halal meat producers near ${q}, USA.`
     }
   };
@@ -284,7 +284,7 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'claude-haiku-4-5',
+          model: 'claude-sonnet-4-5',
           max_tokens: 1500,
           tools: [{ type: 'web_search_20250305', name: 'web_search' }],
           system: config.system,
