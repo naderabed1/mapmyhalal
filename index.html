@@ -103,6 +103,9 @@
     footer a { color: rgba(255,255,255,0.55); text-decoration: none; transition: color 0.15s; }
     footer a:hover { color: rgba(255,255,255,0.85); }
     .footer-links { display: flex; justify-content: center; gap: 1.5rem; margin-top: 0.75rem; }
+    .load-more-wrap { text-align: center; margin-top: 2rem; }
+    .load-more-btn { display: inline-flex; align-items: center; gap: 8px; height: 46px; padding: 0 28px; background: var(--warm-white); border: 1.5px solid var(--green-mid); border-radius: 10px; font-family: 'Jost', sans-serif; font-size: 14px; font-weight: 500; color: var(--green-mid); cursor: pointer; transition: all 0.2s; }
+    .load-more-btn:hover { background: var(--green-mid); color: #fff; }
     @media (max-width: 600px) { nav { padding: 0 1rem; } .hero { padding: 3rem 1.25rem 2.5rem; } main { padding: 2rem 1.25rem 4rem; } .results-grid { grid-template-columns: 1fr; } .tab-btn { font-size: 12px; } }
   </style>
 </head>
@@ -307,13 +310,37 @@
       }
     }
 
+    const PAGE_SIZE = 6;
+    let shownCount = 0;
+
     function renderResults(results, query, radius, config) {
       const container = document.getElementById('resultsContainer');
       const statusBar = document.getElementById('statusBar');
       statusBar.innerHTML = `Found <strong>${results.length} ${config.label}</strong> within ${radius} miles of ${query}`;
       document.getElementById('viewToggle').style.display = 'block';
       if (!results.length) { container.innerHTML = `<div class="empty-state"><span class="empty-icon">${config.icon}</span><h3>No results</h3><p>Try a broader radius or nearby city.</p></div>`; return; }
-      container.innerHTML = `<div class="results-grid">${results.map((r, i) => buildCard(r, i)).join('')}</div>`;
+      shownCount = Math.min(PAGE_SIZE, results.length);
+      const gridHtml = results.slice(0, shownCount).map((r, i) => buildCard(r, i)).join('');
+      const moreHtml = results.length > shownCount
+        ? `<div class="load-more-wrap"><button class="load-more-btn" id="loadMoreBtn" onclick="loadMore()">&#8595; Load more results <span style="opacity:0.6;font-weight:300;font-size:12px;">(${results.length - shownCount} remaining)</span></button></div>`
+        : '';
+      container.innerHTML = `<div class="results-grid" id="resultsGrid">${gridHtml}</div>${moreHtml}`;
+    }
+
+    function loadMore() {
+      const grid = document.getElementById('resultsGrid');
+      const btn = document.getElementById('loadMoreBtn');
+      if (!grid || !btn) return;
+      const next = Math.min(shownCount + PAGE_SIZE, currentResults.length);
+      for (let i = shownCount; i < next; i++) {
+        grid.insertAdjacentHTML('beforeend', buildCard(currentResults[i], i));
+      }
+      shownCount = next;
+      if (shownCount >= currentResults.length) {
+        btn.parentElement.remove();
+      } else {
+        btn.innerHTML = `&#8595; Load more results <span style="opacity:0.6;font-weight:300;font-size:12px;">(${currentResults.length - shownCount} remaining)</span>`;
+      }
     }
 
     function buildCard(r, i) {
